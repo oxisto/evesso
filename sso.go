@@ -41,16 +41,16 @@ func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 
 func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, err error) {
 	var grantType string
-	if !refreshToken {
-		grantType = "authorization_code"
-	} else {
-		grantType = "refresh_token"
-	}
 
 	params := RequestParams{}
 	params.Form = &url.Values{}
-	params.Form.Add("grant_type", grantType)
-	params.Form.Add("code", code)
+	if !refreshToken {
+		params.Form.Add("grant_type", "authorization_code")
+		params.Form.Add("code", code)
+	} else {
+		params.Form.Add("grant_type", "refresh_token")
+		params.Form.Add("refresh_token", code)
+	}
 	params.Header = http.Header{}
 	params.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(sso.ClientID+":"+sso.SecretKey)))
 
