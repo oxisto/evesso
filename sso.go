@@ -40,8 +40,6 @@ func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 }
 
 func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, err error) {
-	var grantType string
-
 	params := RequestParams{}
 	params.Form = &url.Values{}
 	if !refreshToken {
