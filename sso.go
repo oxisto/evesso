@@ -1,13 +1,13 @@
 package evesso
 
 import (
-	"net/url"
-	"net/http"
-	"io"
-	"strings"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
 const (
@@ -16,10 +16,10 @@ const (
 )
 
 type SingleSignOn struct {
-	ClientID string
-	SecretKey string
+	ClientID    string
+	SecretKey   string
 	RedirectURI string
-	Server string
+	Server      string
 }
 
 func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
@@ -39,7 +39,7 @@ func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 	return sso.Server + "/oauth/authorize?" + params.Encode()
 }
 
-func (sso *SingleSignOn) AccessToken(code string, refreshToken *string) (response TokenResponse, err error){
+func (sso *SingleSignOn) AccessToken(code string, refreshToken *string) (response TokenResponse, err error) {
 	var grantType string
 	if refreshToken == nil {
 		grantType = "authorization_code"
@@ -52,9 +52,9 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken *string) (respons
 	params.Form.Add("grant_type", grantType)
 	params.Form.Add("code", code)
 	params.Header = http.Header{}
-	params.Header.Add("Authorization", "Basic " + base64.StdEncoding.EncodeToString([]byte(sso.ClientID + ":" + sso.SecretKey)))
+	params.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(sso.ClientID+":"+sso.SecretKey)))
 
-	request("POST", sso.Server + "/oauth/token", params, &response)
+	request("POST", sso.Server+"/oauth/token", params, &response)
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
 	}
@@ -64,9 +64,9 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken *string) (respons
 func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err error) {
 	params := RequestParams{}
 	params.Header = http.Header{}
-	params.Header.Add("Authorization", "Bearer " + token)
+	params.Header.Add("Authorization", "Bearer "+token)
 
-	err = request("GET", sso.Server + "/oauth/verify", params, &response)
+	err = request("GET", sso.Server+"/oauth/verify", params, &response)
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
 	}
@@ -74,34 +74,34 @@ func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err erro
 }
 
 type RequestParams struct {
-	Form *url.Values
+	Form   *url.Values
 	Header http.Header
 }
 
 type OAuthResponse struct {
-	Error string `json:"error"`
+	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
 
 type TokenResponse struct {
 	OAuthResponse
 
-	AccessToken string `json:"access_token"`
+	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
 type VerifyResponse struct {
 	OAuthResponse
 
-	CharacterID int32
-	CharacterName string
-	ExpiresOn string
-	Scopes string
-	TokenType string
+	CharacterID        int32
+	CharacterName      string
+	ExpiresOn          string
+	Scopes             string
+	TokenType          string
 	CharacterOwnerHash string
 }
 
-func request(method string,  uri string, params RequestParams, response interface{}) (error) {
+func request(method string, uri string, params RequestParams, response interface{}) error {
 	client := http.Client{}
 
 	var reader io.Reader
