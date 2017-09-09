@@ -39,7 +39,7 @@ func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 	return sso.Server + "/oauth/authorize?" + params.Encode()
 }
 
-func (sso *SingleSignOn) AccessToken(code string, refreshToken *string) (response TokenResponse, err error) {
+func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, err error) {
 	var grantType string
 	if refreshToken == nil {
 		grantType = "authorization_code"
