@@ -1,2 +1,3 @@
-# eve-sso
-Go classes to help with EVE SSO
+# evesso
+
+A small Go library to use EVE Online as an SSO provider.

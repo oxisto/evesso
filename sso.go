@@ -1,3 +1,20 @@
+/*
+Copyright 2018 Christian Banse
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Package evesso is the main package of this library.
 package evesso
 
 import (
@@ -11,10 +28,15 @@ import (
 )
 
 const (
-	LIVE_SERVER = "https://login.eveonline.com"
-	TEST_SERVER = "https://sisilogin.testeveonline.com"
+	// LiveServer contains the url of the EVE live server.
+	LiveServer = "https://login.eveonline.com"
+
+	// TestServer contains the url of the EVE test server.
+	TestServer = "https://sisilogin.testeveonline.com"
 )
 
+// SingleSignOn is a structure containing required credentials and
+// settings to use the EVE SSO system.
 type SingleSignOn struct {
 	ClientID    string
 	SecretKey   string
@@ -22,6 +44,7 @@ type SingleSignOn struct {
 	Server      string
 }
 
+// Redirect constructs an OAuth redirect url given a certain state and scope.
 func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 	params := url.Values{}
 	params.Add("response_type", "code")
@@ -39,8 +62,9 @@ func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
 	return sso.Server + "/oauth/authorize?" + params.Encode()
 }
 
+// AccessToken requests an OAuath access token given an authorization code and a refreshToken.
 func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, err error) {
-	params := RequestParams{}
+	params := requestParams{}
 	params.Form = &url.Values{}
 	if !refreshToken {
 		params.Form.Add("grant_type", "authorization_code")
@@ -59,8 +83,9 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 	return
 }
 
+// Verify can be used to verify the authenticity of a token.
 func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err error) {
-	params := RequestParams{}
+	params := requestParams{}
 	params.Header = http.Header{}
 	params.Header.Add("Authorization", "Bearer "+token)
 
@@ -71,16 +96,18 @@ func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err erro
 	return
 }
 
-type RequestParams struct {
+type requestParams struct {
 	Form   *url.Values
 	Header http.Header
 }
 
+// OAuthResponse is a generic OAuth response.
 type OAuthResponse struct {
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
 
+// TokenResponse is an OAuthResponse which contains an access token and/or a a refresh token.
 type TokenResponse struct {
 	OAuthResponse
 
@@ -88,6 +115,7 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// VerifyResponse is a OAuthResponse which contains the details of a verification operation.
 type VerifyResponse struct {
 	OAuthResponse
 
@@ -99,7 +127,7 @@ type VerifyResponse struct {
 	CharacterOwnerHash string
 }
 
-func request(method string, uri string, params RequestParams, response interface{}) error {
+func request(method string, uri string, params requestParams, response interface{}) error {
 	client := http.Client{}
 
 	var reader io.Reader
