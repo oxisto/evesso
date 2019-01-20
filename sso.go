@@ -45,21 +45,19 @@ type SingleSignOn struct {
 }
 
 // Redirect constructs an OAuth redirect url given a certain state and scope.
-func (sso *SingleSignOn) Redirect(state *string, scope *string) string {
+func (sso *SingleSignOn) Redirect(state string, scope *string) string {
 	params := url.Values{}
 	params.Add("response_type", "code")
 	params.Add("client_id", sso.ClientID)
 	params.Add("redirect_uri", sso.RedirectURI)
 
-	if state != nil {
-		params.Add("state", *state)
-	}
+	params.Add("state", state)
 
 	if scope != nil {
 		params.Add("scope", *scope)
 	}
 
-	return sso.Server + "/oauth/authorize?" + params.Encode()
+	return sso.Server + "/v2/oauth/authorize?" + params.Encode()
 }
 
 // AccessToken requests an OAuath access token given an authorization code and a refreshToken.
