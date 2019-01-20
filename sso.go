@@ -74,7 +74,11 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 	params.Header = http.Header{}
 	params.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(sso.ClientID+":"+sso.SecretKey)))
 
-	request("POST", sso.Server+"/v2/oauth/token", params, &response)
+	err = request("POST", sso.Server+"/v2/oauth/token", params, &response)
+	if err != nil {
+		return
+	}
+
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
 	}
@@ -88,6 +92,10 @@ func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err erro
 	params.Header.Add("Authorization", "Bearer "+token)
 
 	err = request("GET", sso.Server+"/v2/oauth/verify", params, &response)
+	if err != nil {
+		return
+	}
+
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
 	}
