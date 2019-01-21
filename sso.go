@@ -85,23 +85,6 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 	return
 }
 
-// Verify can be used to verify the authenticity of a token.
-func (sso *SingleSignOn) Verify(token string) (response VerifyResponse, err error) {
-	params := requestParams{}
-	params.Header = http.Header{}
-	params.Header.Add("Authorization", "Bearer "+token)
-
-	err = request("GET", sso.Server+"/v2/oauth/verify", params, &response)
-	if err != nil {
-		return
-	}
-
-	if response.Error != "" {
-		err = errors.New(response.ErrorDescription)
-	}
-	return
-}
-
 type requestParams struct {
 	Form   *url.Values
 	Header http.Header
@@ -119,18 +102,6 @@ type TokenResponse struct {
 
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-}
-
-// VerifyResponse is a OAuthResponse which contains the details of a verification operation.
-type VerifyResponse struct {
-	OAuthResponse
-
-	CharacterID        int32
-	CharacterName      string
-	ExpiresOn          string
-	Scopes             string
-	TokenType          string
-	CharacterOwnerHash string
 }
 
 func request(method string, uri string, params requestParams, response interface{}) error {
