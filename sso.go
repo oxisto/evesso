@@ -24,8 +24,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/lestrrat-go/jwx/jwk"
 )
+
+var set *jwk.Set
 
 const (
 	// LiveServer contains the url of the EVE live server.
@@ -60,8 +67,8 @@ func (sso *SingleSignOn) Redirect(state string, scope *string) string {
 	return sso.Server + "/v2/oauth/authorize?" + params.Encode()
 }
 
-// AccessToken requests an OAuath access token given an authorization code and a refreshToken.
-func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, err error) {
+// AccessToken requests an OAuath access token as well as additional meta information given an authorization code or a refreshToken.
+func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, expiryTime time.Time, characterID int, characterName string, err error) {
 	params := requestParams{}
 	params.Form = &url.Values{}
 	if !refreshToken {
@@ -82,6 +89,87 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
 	}
+
+	expiryTime, characterID, characterName, err = parseJwt(response.AccessToken)
+
+	return
+}
+
+func parseJwt(s string) (expiryTime time.Time, characterID int, characterName string, err error) {
+	// retrieve JWKs
+	if set == nil {
+		set, err = jwk.Fetch("https://login.eveonline.com/oauth/jwks")
+		if err != nil {
+			return
+		}
+	}
+
+	// TODO: do proper validation (issue #4)
+	// parse token
+	var token *jwt.Token
+	token, err = jwt.Parse(s, func(token *jwt.Token) (interface{}, error) {
+		// get kid
+		kid, ok := token.Header["kid"].(string)
+		if !ok {
+			return nil, errors.New("kid is not a string")
+		}
+
+		// get key from key set
+		keys := set.LookupKeyID(kid)
+
+		if len(keys) != 1 {
+			return nil, errors.New("Could not find key in JWK keys")
+		}
+
+		key, err := keys[0].Materialize()
+
+		return key, err
+	})
+	// parse will through an error, if there is a problem
+	if err != nil {
+		return
+	}
+
+	// extract claims
+	var claims jwt.MapClaims
+	var ok bool
+	if claims, ok = token.Claims.(jwt.MapClaims); !ok {
+		err = errors.New("Cannot convert claims to jwt.MapClaims")
+		return
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		err = errors.New("Claims entry sub is not a string")
+		return
+	}
+
+	characterName, ok = claims["name"].(string)
+	if !ok {
+		err = errors.New("Claims entry name is not a string")
+		return
+	}
+
+	// parse characterID from subject
+	rr := strings.SplitN(sub, ":", 3)
+	if len(rr) != 3 {
+		err = errors.New("Character ID could not be parsed from claims")
+		return
+	}
+
+	characterID, err = strconv.Atoi(rr[2])
+	if err != nil {
+		return
+	}
+
+	// parse expire time
+	timestamp := int64(claims["exp"].(float64))
+	if err != nil {
+		return
+	}
+
+	expiryTime = time.Unix(timestamp, 0)
+
 	return
 }
 
