@@ -18,6 +18,7 @@ limitations under the License.
 package evesso
 
 import (
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -121,9 +122,11 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 			return nil, errors.New("Could not find key in JWK keys")
 		}
 
-		key, err := keys[0].Materialize()
+		var key rsa.PublicKey
 
-		return key, err
+		err := keys[0].Raw(&key)
+
+		return &key, err
 	})
 	// parse will through an error, if there is a problem
 	if err != nil {
