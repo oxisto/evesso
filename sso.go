@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
@@ -89,6 +89,7 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 
 	if response.Error != "" {
 		err = errors.New(response.ErrorDescription)
+		return
 	}
 
 	expiryTime, characterID, characterName, err = parseJwt(response.AccessToken)
@@ -105,7 +106,6 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 		}
 	}
 
-	// TODO: do proper validation (issue #4)
 	// parse token
 	var token *jwt.Token
 	token, err = jwt.Parse(s, func(token *jwt.Token) (interface{}, error) {
@@ -119,7 +119,7 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 		keys := set.LookupKeyID(kid)
 
 		if len(keys) != 1 {
-			return nil, errors.New("Could not find key in JWK keys")
+			return nil, errors.New("could not find key in JWK keys")
 		}
 
 		var key rsa.PublicKey
@@ -137,26 +137,26 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 	var claims jwt.MapClaims
 	var ok bool
 	if claims, ok = token.Claims.(jwt.MapClaims); !ok {
-		err = errors.New("Cannot convert claims to jwt.MapClaims")
+		err = errors.New("cannot convert claims to jwt.MapClaims")
 		return
 	}
 
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		err = errors.New("Claims entry sub is not a string")
+		err = errors.New("claims entry sub is not a string")
 		return
 	}
 
 	characterName, ok = claims["name"].(string)
 	if !ok {
-		err = errors.New("Claims entry name is not a string")
+		err = errors.New("claims entry name is not a string")
 		return
 	}
 
 	// parse characterID from subject
 	rr := strings.SplitN(sub, ":", 3)
 	if len(rr) != 3 {
-		err = errors.New("Character ID could not be parsed from claims")
+		err = errors.New("character ID could not be parsed from claims")
 		return
 	}
 
