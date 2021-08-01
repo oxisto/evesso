@@ -18,6 +18,7 @@ limitations under the License.
 package evesso
 
 import (
+	"context"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
@@ -33,7 +34,8 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
-var set *jwk.Set
+var set jwk.Set
+var keyRetrieved bool
 
 const (
 	// LiveServer contains the url of the EVE live server.
@@ -68,7 +70,7 @@ func (sso *SingleSignOn) Redirect(state string, scope *string) string {
 	return sso.Server + "/v2/oauth/authorize?" + params.Encode()
 }
 
-// AccessToken requests an OAuath access token as well as additional meta information given an authorization code or a refreshToken.
+// AccessToken requests an OAuth access token as well as additional meta information given an authorization code or a refreshToken.
 func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response TokenResponse, expiryTime time.Time, characterID int, characterName string, err error) {
 	params := requestParams{}
 	params.Form = &url.Values{}
@@ -99,11 +101,13 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 
 func parseJwt(s string) (expiryTime time.Time, characterID int, characterName string, err error) {
 	// retrieve JWKs
-	if set == nil {
-		set, err = jwk.Fetch("https://login.eveonline.com/oauth/jwks")
+	if !keyRetrieved {
+		set, err = jwk.Fetch(context.Background(), "https://login.eveonline.com/oauth/jwks")
 		if err != nil {
 			return
 		}
+
+		keyRetrieved = true
 	}
 
 	// parse token
@@ -116,15 +120,15 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 		}
 
 		// get key from key set
-		keys := set.LookupKeyID(kid)
+		jwkKey, ok := set.LookupKeyID(kid)
 
-		if len(keys) != 1 {
+		if !ok {
 			return nil, errors.New("could not find key in JWK keys")
 		}
 
 		var key rsa.PublicKey
 
-		err := keys[0].Raw(&key)
+		err := jwkKey.Raw(&key)
 
 		return &key, err
 	})
