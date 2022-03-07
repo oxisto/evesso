@@ -18,7 +18,6 @@ limitations under the License.
 package evesso
 
 import (
-	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -29,11 +28,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/lestrrat-go/jwx/jwk"
 )
 
-var set *jwk.Set
+var set *keyfunc.JWKS
 
 const (
 	// LiveServer contains the url of the EVE live server.
@@ -100,7 +99,7 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 func parseJwt(s string) (expiryTime time.Time, characterID int, characterName string, err error) {
 	// retrieve JWKs
 	if set == nil {
-		set, err = jwk.Fetch("https://login.eveonline.com/oauth/jwks")
+		set, err = keyfunc.Get("https://login.eveonline.com/oauth/jwks", keyfunc.Options{})
 		if err != nil {
 			return
 		}
@@ -108,26 +107,7 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 
 	// parse token
 	var token *jwt.Token
-	token, err = jwt.Parse(s, func(token *jwt.Token) (interface{}, error) {
-		// get kid
-		kid, ok := token.Header["kid"].(string)
-		if !ok {
-			return nil, errors.New("kid is not a string")
-		}
-
-		// get key from key set
-		keys := set.LookupKeyID(kid)
-
-		if len(keys) != 1 {
-			return nil, errors.New("could not find key in JWK keys")
-		}
-
-		var key rsa.PublicKey
-
-		err := keys[0].Raw(&key)
-
-		return &key, err
-	})
+	token, err = jwt.Parse(s, set.Keyfunc)
 	// parse will through an error, if there is a problem
 	if err != nil {
 		return
