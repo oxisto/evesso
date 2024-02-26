@@ -28,11 +28,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var set *keyfunc.JWKS
+var kf keyfunc.Keyfunc
 
 const (
 	// LiveServer contains the url of the EVE live server.
@@ -98,8 +98,8 @@ func (sso *SingleSignOn) AccessToken(code string, refreshToken bool) (response T
 
 func parseJwt(s string) (expiryTime time.Time, characterID int, characterName string, err error) {
 	// retrieve JWKs
-	if set == nil {
-		set, err = keyfunc.Get("https://login.eveonline.com/oauth/jwks", keyfunc.Options{})
+	if kf == nil {
+		kf, err = keyfunc.NewDefault([]string{"https://login.eveonline.com/oauth/jwks"})
 		if err != nil {
 			return
 		}
@@ -107,7 +107,7 @@ func parseJwt(s string) (expiryTime time.Time, characterID int, characterName st
 
 	// parse token
 	var token *jwt.Token
-	token, err = jwt.Parse(s, set.Keyfunc)
+	token, err = jwt.Parse(s, kf.Keyfunc)
 	// parse will through an error, if there is a problem
 	if err != nil {
 		return
