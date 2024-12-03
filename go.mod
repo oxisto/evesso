@@ -2,7 +2,7 @@ module github.com/oxisto/evesso
 
 go 1.21
 
-toolchain go1.23.1
+toolchain go1.23.4
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.5
