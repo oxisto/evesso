@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.11
-	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/golang-jwt/jwt/v5 v5.3.0
 )
 
 require (
