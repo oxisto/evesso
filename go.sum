@@ -16,6 +16,8 @@ github.com/MicahParks/keyfunc/v3 v3.3.10 h1:JtEGE8OcNeI297AMrR4gVXivV8fyAawFUMkb
 github.com/MicahParks/keyfunc/v3 v3.3.10/go.mod h1:1TEt+Q3FO7Yz2zWeYO//fMxZMOiar808NqjWQQpBPtU=
 github.com/MicahParks/keyfunc/v3 v3.3.11 h1:eA6wNltwdSRX2gtpTwZseBCC9nGeBkI9KxHtTyZbDbo=
 github.com/MicahParks/keyfunc/v3 v3.3.11/go.mod h1:y6Ed3dMgNKTcpxbaQHD8mmrYDUZWJAxteddA6OQj+ag=
+github.com/MicahParks/keyfunc/v3 v3.6.1 h1:A8A5zGZ8XmRyxizSY7s5FLY/aSplrnEBLCOrC0D1ojM=
+github.com/MicahParks/keyfunc/v3 v3.6.1/go.mod h1:y6Ed3dMgNKTcpxbaQHD8mmrYDUZWJAxteddA6OQj+ag=
 github.com/golang-jwt/jwt/v5 v5.2.0 h1:d/ix8ftRUorsN+5eMIlF4T6J8CAt9rch3My2winC1Jw=
 github.com/golang-jwt/jwt/v5 v5.2.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/golang-jwt/jwt/v5 v5.2.1 h1:OuVbFODueb089Lh128TAcimifWaLhJwVflnrgM17wHk=
